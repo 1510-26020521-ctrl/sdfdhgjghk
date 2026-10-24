@@ -1,0 +1,1381 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>3분 사장님</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+            touch-action: manipulation;
+            user-select: none;
+            -webkit-user-select: none;
+            background-color: #1a1a2e;
+            color: #ffffff;
+            overflow-x: hidden;
+            overflow-y: auto;
+        }
+        canvas {
+            display: block;
+            margin: 0 auto;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+            background-color: #2b2b36;
+        }
+
+        /* mobile touch controls panel */
+        .touch-btn {
+            width: 70px;
+            height: 70px;
+            background-color: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(4px);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 14px;
+            color: #ffffff;
+            font-weight: bold;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+            transition: background-color 0.1s, transform 0.1s;
+            cursor: pointer;
+        }
+        .touch-btn:active {
+            background-color: rgba(245, 158, 11, 0.5);
+            transform: scale(0.92);
+        }
+        .touch-btn-sub {
+            font-size: 10px;
+            opacity: 0.8;
+            margin-top: 2px;
+        }
+
+        /* Hide mobile controls on desktop/pointer devices */
+        @media (pointer: fine) and (min-width: 768px) {
+            #mobileControls {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-center min-h-screen p-2 md:p-4 pb-12 md:pb-4">
+    <div class="relative w-full max-w-4xl flex flex-col items-center">
+        <canvas id="gameCanvas" width="900" height="600" class="rounded-xl border-4 border-amber-500/30 w-full h-auto max-w-full"></canvas>
+    </div>
+
+    <!-- Mobile Touch Button Controls Panel (70px x 70px, Semi-transparent) -->
+    <div id="mobileControls" class="w-full max-w-4xl mt-3 flex flex-col gap-2 z-10 px-1 select-none">
+        <!-- Ingredients Row -->
+        <div class="flex justify-center gap-1.5 flex-wrap">
+            <button class="touch-btn" onclick="triggerKey('1')">
+                <span class="text-xs">아래빵</span>
+                <span class="touch-btn-sub">[1]</span>
+            </button>
+            <button class="touch-btn" onclick="triggerKey('2')">
+                <span class="text-xs">패티</span>
+                <span class="touch-btn-sub">[2]</span>
+            </button>
+            <button class="touch-btn" onclick="triggerKey('3')">
+                <span class="text-xs">치즈</span>
+                <span class="touch-btn-sub">[3]</span>
+            </button>
+            <button class="touch-btn" onclick="triggerKey('4')">
+                <span class="text-xs">양상추</span>
+                <span class="touch-btn-sub">[4]</span>
+            </button>
+            <button class="touch-btn" onclick="triggerKey('5')">
+                <span class="text-xs">피클</span>
+                <span class="touch-btn-sub">[5]</span>
+            </button>
+            <button class="touch-btn" onclick="triggerKey('6')">
+                <span class="text-xs">위빵</span>
+                <span class="touch-btn-sub">[6]</span>
+            </button>
+        </div>
+
+        <!-- Cooking Equipment & Actions Row -->
+        <div class="flex justify-center gap-1.5 flex-wrap">
+            <button class="touch-btn !border-amber-400/50" onclick="triggerKey('Q')">
+                <span class="text-xs">🔥 그릴</span>
+                <span class="touch-btn-sub">[Q]</span>
+            </button>
+            <button class="touch-btn !border-yellow-400/50" onclick="triggerKey('W')">
+                <span class="text-xs">🍟 튀기기</span>
+                <span class="touch-btn-sub">[W]</span>
+            </button>
+            <button class="touch-btn !border-amber-500/50" onclick="triggerKey('T')">
+                <span class="text-xs">🍟 감튀놓기</span>
+                <span class="touch-btn-sub">[T]</span>
+            </button>
+            <button class="touch-btn !border-blue-400/50" onclick="triggerKey('E')">
+                <span class="text-xs">🥤 따르기</span>
+                <span class="touch-btn-sub">[E]</span>
+            </button>
+            <button class="touch-btn !border-sky-500/50" onclick="triggerKey('Y')">
+                <span class="text-xs">🥤 콜라놓기</span>
+                <span class="touch-btn-sub">[Y]</span>
+            </button>
+            <button class="touch-btn !border-rose-500/50" onclick="triggerKey('R')">
+                <span class="text-xs">🗑️ 비우기</span>
+                <span class="touch-btn-sub">[R]</span>
+            </button>
+        </div>
+
+        <!-- Customer Serve Row -->
+        <div class="flex justify-center gap-1.5 flex-wrap">
+            <button class="touch-btn !border-emerald-500/50" onclick="triggerKey('A')">
+                <span class="text-xs">👤 1번</span>
+                <span class="touch-btn-sub">[A]</span>
+            </button>
+            <button class="touch-btn !border-emerald-500/50" onclick="triggerKey('S')">
+                <span class="text-xs">👤 2번</span>
+                <span class="touch-btn-sub">[S]</span>
+            </button>
+            <button class="touch-btn !border-emerald-500/50" onclick="triggerKey('D')">
+                <span class="text-xs">👤 3번</span>
+                <span class="touch-btn-sub">[D]</span>
+            </button>
+            <button class="touch-btn !border-emerald-500/50" onclick="triggerKey('F')">
+                <span class="text-xs">👤 4번</span>
+                <span class="touch-btn-sub">[F]</span>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Chef image setup with fallback flag
+        const chefImg = new Image();
+        let isChefImgLoaded = false;
+        chefImg.onload = () => { isChefImgLoaded = true; };
+        chefImg.onerror = () => { isChefImgLoaded = false; };
+        chefImg.src = 'images/chef.png';
+
+        // Audio System Setup
+        let isMuted = false;
+        
+        const audioFiles = {
+            start: 'sounds/start sound.wav',
+            bgm: 'sounds/background sound.wav',
+            pop: 'sounds/pop sound.wav',
+            victory: 'sounds/victory sound.wav',
+            lose: 'sounds/game over sound.wav'
+        };
+
+        const bgmAudio = new Audio(audioFiles.bgm);
+        bgmAudio.loop = true;
+
+        function playSound(type) {
+            if (isMuted) return;
+            
+            if (type === 'bgm') {
+                try {
+                    bgmAudio.currentTime = 0;
+                    const playPromise = bgmAudio.play();
+                    if (playPromise !== undefined) {
+                        playPromise.catch(() => {});
+                    }
+                } catch (e) {}
+                return;
+            }
+
+            if (type === 'pauseBgm') {
+                try {
+                    bgmAudio.pause();
+                } catch (e) {}
+                return;
+            }
+
+            if (type === 'resumeBgm') {
+                try {
+                    const playPromise = bgmAudio.play();
+                    if (playPromise !== undefined) {
+                        playPromise.catch(() => {});
+                    }
+                } catch (e) {}
+                return;
+            }
+            
+            if (type === 'stopBgm') {
+                try {
+                    bgmAudio.pause();
+                    bgmAudio.currentTime = 0;
+                } catch (e) {}
+                return;
+            }
+
+            if (audioFiles[type]) {
+                try {
+                    const sound = new Audio(audioFiles[type]);
+                    sound.currentTime = 0;
+                    const playPromise = sound.play();
+                    if (playPromise !== undefined) {
+                        playPromise.catch(() => {});
+                    }
+                } catch (e) {}
+            }
+        }
+
+        // Click zone for sound toggle button (top right: x: 790, y: 10, w: 100, h: 35)
+        const SOUND_TOGGLE_BTN = { x: 790, y: 10, w: 100, h: 35 };
+
+        let gameState = 'START'; // START, PLAYING, PAUSED, GAMEOVER_WIN, GAMEOVER_LOSE
+        let currentDifficulty = 'NORMAL';
+        
+        const DIFFICULTY_SETTINGS = {
+            'EASY': { name: '쉬움 (Easy)', patienceMin: 55, patienceMax: 65, patienceDecay: 0.15, baseSpawnInterval: 5000, minSpawnInterval: 2800, targetSales: 25000, targetSatisfaction: 60, btnColor: '#10b981' },
+            'NORMAL': { name: '보통 (Normal)', patienceMin: 32, patienceMax: 38, patienceDecay: 0.45, baseSpawnInterval: 4000, minSpawnInterval: 1800, targetSales: 30000, targetSatisfaction: 70, btnColor: '#f59e0b' },
+            'HARD': { name: '어려움 (Hard)', patienceMin: 25, patienceMax: 31, patienceDecay: 0.8, baseSpawnInterval: 3000, minSpawnInterval: 1200, targetSales: 35000, targetSatisfaction: 80, btnColor: '#ef4444' }
+        };
+
+        const TOTAL_TIME = 180;
+        let timeLeft = TOTAL_TIME;
+        let targetSales = 30000;
+        let targetSatisfaction = 70;
+
+        let sales = 0;
+        let totalCustomersServed = 0;
+        let satisfiedCustomers = 0;
+        let satisfactionRate = 100;
+
+        let lastTime = 0;
+        let customerSpawnTimer = 0;
+        let baseSpawnInterval = 4000;
+
+        const BURGERS = {
+            'SINGLE': { name: '기본 버거', price: 1800, ingredients: ['BUN_BOTTOM', 'PATTY', 'BUN_TOP'] },
+            'CHEESE': { name: '치즈 버거', price: 2500, ingredients: ['BUN_BOTTOM', 'PATTY', 'CHEESE', 'BUN_TOP'] },
+            'VEGGIE': { name: '야채 버거', price: 2200, ingredients: ['BUN_BOTTOM', 'LETTUCE', 'PICKLE', 'BUN_TOP'] },
+            'DELUXE': { name: '디럭스 버거', price: 3500, ingredients: ['BUN_BOTTOM', 'PATTY', 'CHEESE', 'LETTUCE', 'PICKLE', 'BUN_TOP'] }
+        };
+
+        // 특이/괴식 주문 목록 (약 15% 확률로 발생)
+        const SPECIAL_ORDERS = [
+            { name: '🍖 고기폭탄 버거', price: 4800, ingredients: ['BUN_BOTTOM', 'PATTY', 'PATTY', 'PATTY', 'BUN_TOP'] },
+            { name: '🧀 치즈 덕후 버거', price: 3800, ingredients: ['BUN_BOTTOM', 'CHEESE', 'CHEESE', 'CHEESE', 'CHEESE', 'BUN_TOP'] },
+            { name: '🥗 다이어트 버거', price: 2800, ingredients: ['BUN_BOTTOM', 'LETTUCE', 'LETTUCE', 'LETTUCE', 'BUN_TOP'] },
+            { name: '🥩 노빵 체식 버거', price: 4200, ingredients: ['PATTY', 'CHEESE', 'LETTUCE', 'PICKLE', 'PATTY'] },
+            { name: '🗼 몬스터 타워', price: 5800, ingredients: ['BUN_BOTTOM', 'PATTY', 'CHEESE', 'LETTUCE', 'PATTY', 'CHEESE', 'BUN_TOP'] },
+            { name: '🥒 피클 매니아', price: 3000, ingredients: ['BUN_BOTTOM', 'PATTY', 'PICKLE', 'PICKLE', 'PICKLE', 'BUN_TOP'] }
+        ];
+
+        const SIDE_ITEMS = { 'FRIES': { name: '감자튀김', price: 1500 }, 'COLA': { name: '콜라', price: 1200 } };
+
+        const INGREDIENT_NAMES = {
+            'BUN_BOTTOM': '아래빵', 'PATTY': '구운패티', 'PATTY_RAW': '생패티', 'PATTY_BURNT': '탄패티',
+            'CHEESE': '치즈', 'LETTUCE': '양상추', 'PICKLE': '피클', 'BUN_TOP': '위빵', 'FRIES': '감자튀김', 'COLA': '콜라'
+        };
+
+        let customers = [];
+        let currentAssembly = [];
+        // 고기 굽는 속도를 더 빠르게 조정 (2200ms -> 1400ms)
+        let grillSlot = { status: 'EMPTY', progress: 0, cookTime: 1400 };
+        let fryerSlot = { status: 'EMPTY', progress: 0, cookTime: 2000, stock: 0 };
+        let dispenserSlot = { status: 'EMPTY', progress: 0, fillTime: 1500, stock: 0 };
+
+        // 최고 점수 (로컬스토리지 저장)
+        let highScores = {
+            'EASY': parseInt(localStorage.getItem('3min_boss_highscore_EASY') || '0'),
+            'NORMAL': parseInt(localStorage.getItem('3min_boss_highscore_NORMAL') || '0'),
+            'HARD': parseInt(localStorage.getItem('3min_boss_highscore_HARD') || '0')
+        };
+
+        const CLICK_ZONES = {
+            INGREDIENTS: {
+                BUN_BOTTOM: { x: 20, y: 470, w: 75, h: 100, name: '1.아래빵', item: 'BUN_BOTTOM' },
+                PATTY_RAW: { x: 100, y: 470, w: 75, h: 100, name: '생패티', item: 'PATTY_RAW' },
+                CHEESE: { x: 180, y: 470, w: 75, h: 100, name: '치즈', item: 'CHEESE' },
+                LETTUCE: { x: 260, y: 470, w: 75, h: 100, name: '양상추', item: 'LETTUCE' },
+                PICKLE: { x: 340, y: 470, w: 75, h: 100, name: '피클', item: 'PICKLE' },
+                BUN_TOP: { x: 420, y: 470, w: 75, h: 100, name: '위빵', item: 'BUN_TOP' }
+            },
+            GRILL: { x: 505, y: 465, w: 90, h: 110 },
+            FRYER: { x: 600, y: 465, w: 85, h: 110 },
+            DISPENSER: { x: 690, y: 465, w: 85, h: 110 },
+            ASSEMBLY: { x: 780, y: 450, w: 80, h: 125 },
+            TRASH: { x: 865, y: 450, w: 30, h: 125 },
+            CUSTOMERS: [
+                { x: 20, y: 75, w: 200, h: 280 },
+                { x: 235, y: 75, w: 200, h: 280 },
+                { x: 450, y: 75, w: 200, h: 280 },
+                { x: 665, y: 75, w: 200, h: 280 }
+            ],
+            DIFF_EASY_BTN: { x: 180, y: 390, w: 160, h: 60 },
+            DIFF_NORMAL_BTN: { x: 370, y: 390, w: 160, h: 60 },
+            DIFF_HARD_BTN: { x: 560, y: 390, w: 160, h: 60 },
+            RESTART_BTN: { x: 320, y: 410, w: 260, h: 65 },
+            PAUSE_RESUME_BTN: { x: 280, y: 310, w: 160, h: 50 },
+            PAUSE_HOME_BTN: { x: 460, y: 310, w: 160, h: 50 }
+        };
+
+        let floatingTexts = [];
+
+        function initGame(difficulty = 'NORMAL') {
+            playSound('start');
+            currentDifficulty = difficulty;
+            const diffConfig = DIFFICULTY_SETTINGS[currentDifficulty];
+
+            gameState = 'PLAYING';
+            timeLeft = TOTAL_TIME;
+            targetSales = diffConfig.targetSales;
+            targetSatisfaction = diffConfig.targetSatisfaction;
+            baseSpawnInterval = diffConfig.baseSpawnInterval;
+
+            sales = 0;
+            totalCustomersServed = 0;
+            satisfiedCustomers = 0;
+            satisfactionRate = 100;
+            customers = [];
+            currentAssembly = [];
+            grillSlot = { status: 'EMPTY', progress: 0, cookTime: 1400 };
+            fryerSlot = { status: 'EMPTY', progress: 0, cookTime: 2000, stock: 0 };
+            dispenserSlot = { status: 'EMPTY', progress: 0, fillTime: 1500, stock: 0 };
+            floatingTexts = [];
+            customerSpawnTimer = 0;
+            
+            spawnCustomer();
+            playSound('bgm');
+        }
+
+        function togglePause() {
+            if (gameState === 'PLAYING') {
+                gameState = 'PAUSED';
+                playSound('pauseBgm');
+            } else if (gameState === 'PAUSED') {
+                gameState = 'PLAYING';
+                playSound('resumeBgm');
+            }
+        }
+
+        function returnToStart() {
+            playSound('stopBgm');
+            gameState = 'START';
+        }
+
+        function spawnCustomer() {
+            if (customers.length >= 4) return;
+
+            const diffConfig = DIFFICULTY_SETTINGS[currentDifficulty];
+            const timePassedRatio = (TOTAL_TIME - timeLeft) / TOTAL_TIME;
+            
+            const minutesPassed = Math.floor((TOTAL_TIME - timeLeft) / 60);
+            const patiencePacingPenalty = minutesPassed * 2;
+
+            // 15% 확률로 특이/괴식 주문 발생!
+            const isSpecialOrder = Math.random() < 0.15;
+            let burgerInfo;
+
+            if (isSpecialOrder) {
+                burgerInfo = SPECIAL_ORDERS[Math.floor(Math.random() * SPECIAL_ORDERS.length)];
+            } else {
+                const burgerKeys = Object.keys(BURGERS);
+                const selectedBurgerKey = burgerKeys[Math.floor(Math.random() * burgerKeys.length)];
+                burgerInfo = BURGERS[selectedBurgerKey];
+            }
+
+            const sideOption = Math.floor(Math.random() * 4);
+            let hasFries = (sideOption === 1 || sideOption === 3);
+            let hasCola = (sideOption === 2 || sideOption === 3);
+
+            let totalPrice = burgerInfo.price;
+            let itemsList = [...burgerInfo.ingredients];
+
+            if (hasFries) { totalPrice += SIDE_ITEMS.FRIES.price; itemsList.push('FRIES'); }
+            if (hasCola) { totalPrice += SIDE_ITEMS.COLA.price; itemsList.push('COLA'); }
+
+            let orderTitle = burgerInfo.name;
+            if (hasFries && hasCola) orderTitle += ' 세트';
+            else if (hasFries) orderTitle += ' + 감튀';
+            else if (hasCola) orderTitle += ' + 콜라';
+
+            const basePatience = diffConfig.patienceMin + Math.random() * (diffConfig.patienceMax - diffConfig.patienceMin);
+            const maxPatience = Math.max(8, basePatience - (timePassedRatio * 8) - patiencePacingPenalty);
+
+            const customerTypes = [
+                { color: '#e74c3c', hair: 'SHORT', skin: '#ffdbac', name: '성급한 손님' },
+                { color: '#3498db', hair: 'LONG', skin: '#f1c27d', name: '일반 손님' },
+                { color: '#f1c40f', hair: 'CAP', skin: '#e0ac69', name: '미식가' },
+                { color: '#9b59b6', hair: 'GLASSES', skin: '#ffdbac', name: '학생' }
+            ];
+            const appearance = customerTypes[Math.floor(Math.random() * customerTypes.length)];
+
+            customers.push({ orderTitle, price: totalPrice, ingredients: itemsList, hasFries, hasCola, patience: maxPatience, maxPatience, appearance, isSpecial: isSpecialOrder });
+        }
+
+        function addFloatingText(text, x, y, color = '#2ecc71') {
+            floatingTexts.push({ text: text, x: x, y: y, color: color, alpha: 1.0, dy: -1.2 });
+        }
+
+        function gameLoop(timestamp) {
+            if (!lastTime) lastTime = timestamp;
+            const dt = (timestamp - lastTime) / 1000;
+            lastTime = timestamp;
+
+            update(dt);
+            render();
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        function update(dt) {
+            if (gameState !== 'PLAYING') return;
+
+            const diffConfig = DIFFICULTY_SETTINGS[currentDifficulty];
+
+            timeLeft -= dt;
+            if (timeLeft <= 0) {
+                timeLeft = 0;
+                endGame();
+                return;
+            }
+
+            const timeRatio = (TOTAL_TIME - timeLeft) / TOTAL_TIME; 
+            const currentInterval = Math.max(diffConfig.minSpawnInterval, baseSpawnInterval - (timeRatio * 2200));
+
+            customerSpawnTimer += dt * 1000;
+            if (customerSpawnTimer >= currentInterval) {
+                customerSpawnTimer = 0;
+                spawnCustomer();
+            }
+
+            if (grillSlot.status === 'COOKING') {
+                grillSlot.progress += dt * 1000;
+                if (grillSlot.progress >= grillSlot.cookTime) grillSlot.status = 'READY';
+            } else if (grillSlot.status === 'READY') {
+                grillSlot.progress += dt * 1000;
+                if (grillSlot.progress >= grillSlot.cookTime + 5500) grillSlot.status = 'BURNT';
+            }
+
+            if (fryerSlot.status === 'COOKING') {
+                fryerSlot.progress += dt * 1000;
+                if (fryerSlot.progress >= fryerSlot.cookTime) {
+                    fryerSlot.status = 'EMPTY';
+                    fryerSlot.progress = 0;
+                    if (fryerSlot.stock < 4) {
+                        fryerSlot.stock++;
+                        addFloatingText("🍟 감튀 1개 완성! (재고 " + fryerSlot.stock + "/4)", CLICK_ZONES.FRYER.x + 40, CLICK_ZONES.FRYER.y - 10, '#2ecc71');
+                    }
+                }
+            }
+
+            if (dispenserSlot.status === 'FILLING') {
+                dispenserSlot.progress += dt * 1000;
+                if (dispenserSlot.progress >= dispenserSlot.fillTime) {
+                    dispenserSlot.status = 'EMPTY';
+                    dispenserSlot.progress = 0;
+                    if (dispenserSlot.stock < 4) {
+                        dispenserSlot.stock++;
+                        addFloatingText("🥤 콜라 1잔 완성! (재고 " + dispenserSlot.stock + "/4)", CLICK_ZONES.DISPENSER.x + 40, CLICK_ZONES.DISPENSER.y - 10, '#2ecc71');
+                    }
+                }
+            }
+
+            for (let i = customers.length - 1; i >= 0; i--) {
+                const c = customers[i];
+                const decayMultiplier = 1 + (timeRatio * diffConfig.patienceDecay);
+                c.patience -= dt * decayMultiplier;
+
+                if (c.patience <= 0) {
+                    totalCustomersServed++;
+                    recalculateSatisfaction();
+                    addFloatingText("너무 늦어요! (퇴장)", CLICK_ZONES.CUSTOMERS[i].x + 95, CLICK_ZONES.CUSTOMERS[i].y + 120, '#e74c3c');
+                    customers.splice(i, 1);
+                }
+            }
+
+            for (let i = floatingTexts.length - 1; i >= 0; i--) {
+                const ft = floatingTexts[i];
+                ft.y += ft.dy;
+                ft.alpha -= dt * 0.7;
+                if (ft.alpha <= 0) floatingTexts.splice(i, 1);
+            }
+        }
+
+        function recalculateSatisfaction() {
+            if (totalCustomersServed === 0) satisfactionRate = 100;
+            else satisfactionRate = Math.round((satisfiedCustomers / totalCustomersServed) * 100);
+        }
+
+        function endGame() {
+            playSound('stopBgm');
+            
+            if (sales > highScores[currentDifficulty]) {
+                highScores[currentDifficulty] = sales;
+                try {
+                    localStorage.setItem(`3min_boss_highscore_${currentDifficulty}`, sales.toString());
+                } catch(e) {}
+            }
+
+            if (sales >= targetSales && satisfactionRate >= targetSatisfaction) {
+                gameState = 'GAMEOVER_WIN';
+                playSound('victory');
+            } else {
+                gameState = 'GAMEOVER_LOSE';
+                playSound('lose');
+            }
+        }
+
+        function render() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            drawRestaurantBackground();
+
+            if (gameState === 'START') {
+                drawStartScreen();
+                drawSoundToggleButton();
+                return;
+            }
+
+            drawKitchenArea();
+            drawCustomers();
+            drawAssemblyArea();
+            drawHUD();
+            drawSoundToggleButton();
+            drawFloatingTexts();
+
+            if (gameState === 'PAUSED') {
+                drawPauseScreen();
+            } else if (gameState === 'GAMEOVER_WIN' || gameState === 'GAMEOVER_LOSE') {
+                drawGameOverScreen();
+                drawSoundToggleButton();
+            }
+        }
+
+        function drawRestaurantBackground() {
+            let topColor = '#1f2937';
+            let bottomColor = '#374151';
+            let floorColor = '#111827';
+
+            if (timeLeft <= 60) {
+                topColor = '#4c0519';
+                bottomColor = '#881337';
+                floorColor = '#1f0910';
+            } else if (timeLeft <= 120) {
+                topColor = '#311042';
+                bottomColor = '#581c87';
+                floorColor = '#170724';
+            }
+
+            const wallGradient = ctx.createLinearGradient(0, 0, 0, 360);
+            wallGradient.addColorStop(0, topColor);
+            wallGradient.addColorStop(1, bottomColor);
+            ctx.fillStyle = wallGradient;
+            ctx.fillRect(0, 0, canvas.width, 360);
+
+            ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+            ctx.lineWidth = 2;
+            for (let x = 0; x < canvas.width; x += 30) {
+                ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, 360); ctx.stroke();
+            }
+
+            ctx.fillStyle = floorColor;
+            ctx.fillRect(0, 360, canvas.width, 240);
+        }
+
+        function drawChef(x, y) {
+            if (isChefImgLoaded) {
+                ctx.drawImage(chefImg, x - 30, y - 80, 60, 60);
+            } else {
+                ctx.fillStyle = '#ffffff'; ctx.fillRect(x - 24, y - 45, 48, 45);
+                ctx.fillStyle = '#e74c3c';
+                ctx.beginPath(); ctx.moveTo(x - 8, y - 45); ctx.lineTo(x + 8, y - 45); ctx.lineTo(x, y - 32); ctx.fill();
+
+                ctx.fillStyle = '#ffdbac'; ctx.beginPath(); ctx.arc(x, y - 65, 20, 0, Math.PI * 2); ctx.fill();
+                ctx.fillStyle = '#111';
+                ctx.beginPath(); ctx.arc(x - 7, y - 68, 3, 0, Math.PI * 2); ctx.arc(x + 7, y - 68, 3, 0, Math.PI * 2); ctx.fill();
+
+                ctx.fillStyle = '#ffffff'; ctx.fillRect(x - 16, y - 90, 32, 10);
+                ctx.beginPath(); ctx.arc(x, y - 94, 20, 0, Math.PI * 2); ctx.fill();
+            }
+        }
+
+        function drawKitchenArea() {
+            ctx.fillStyle = '#1f2937';
+            ctx.fillRect(10, 375, canvas.width - 20, 215);
+            ctx.fillStyle = '#374151';
+            ctx.fillRect(10, 365, canvas.width - 20, 10);
+
+            drawChef(460, 365);
+
+            const ingKeys = Object.keys(CLICK_ZONES.INGREDIENTS);
+            ingKeys.forEach(key => {
+                const zone = CLICK_ZONES.INGREDIENTS[key];
+                
+                ctx.fillStyle = '#111827';
+                ctx.beginPath();
+                ctx.roundRect(zone.x, zone.y, zone.w, zone.h, 8);
+                ctx.fill();
+                ctx.strokeStyle = (key === 'BUN_BOTTOM' || key === 'BUN_TOP') ? '#f59e0b' : '#4b5563';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                ctx.fillStyle = (key === 'BUN_BOTTOM' || key === 'BUN_TOP') ? '#fbbf24' : '#f8fafc';
+                ctx.font = 'bold 11px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(zone.name, zone.x + zone.w/2, zone.y + 15);
+
+                drawRealisticIngredientIcon(zone.item, zone.x + zone.w/2, zone.y + 58);
+            });
+
+            const grill = CLICK_ZONES.GRILL;
+            ctx.fillStyle = '#000000';
+            ctx.beginPath(); ctx.roundRect(grill.x, grill.y, grill.w, grill.h, 8); ctx.fill();
+            ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 2; ctx.stroke();
+
+            ctx.fillStyle = '#ffffff'; ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'center';
+            ctx.fillText("🔥 패티그릴", grill.x + grill.w/2, grill.y - 6);
+
+            if (grillSlot.status === 'COOKING') {
+                drawRealisticPatty(grill.x + grill.w/2, grill.y + grill.h/2 - 5, 'RAW', 24);
+                drawProgressBar(grill.x + 8, grill.y + grill.h - 18, grill.w - 16, 6, grillSlot.progress / grillSlot.cookTime, '#f39c12');
+                ctx.fillStyle = '#f39c12'; ctx.font = 'bold 10px sans-serif';
+                ctx.fillText("굽는중...", grill.x + grill.w/2, grill.y + grill.h/2 + 20);
+            } else if (grillSlot.status === 'READY') {
+                drawRealisticPatty(grill.x + grill.w/2, grill.y + grill.h/2 - 5, 'COOKED', 24);
+                const ratio = 1 - ((grillSlot.progress - grillSlot.cookTime) / 5500);
+                drawProgressBar(grill.x + 8, grill.y + grill.h - 18, grill.w - 16, 6, ratio, '#2ecc71');
+                ctx.fillStyle = '#2ecc71'; ctx.font = 'bold 10px sans-serif';
+                ctx.fillText("완성!(클릭)", grill.x + grill.w/2, grill.y + grill.h/2 + 20);
+            } else if (grillSlot.status === 'BURNT') {
+                drawRealisticPatty(grill.x + grill.w/2, grill.y + grill.h/2 - 5, 'BURNT', 24);
+                ctx.fillStyle = '#ef4444'; ctx.font = 'bold 10px sans-serif';
+                ctx.fillText("탄 패티!", grill.x + grill.w/2, grill.y + grill.h/2 + 20);
+            } else {
+                ctx.fillStyle = '#9ca3af'; ctx.font = '10px sans-serif';
+                ctx.fillText("생패티 넣기", grill.x + grill.w/2, grill.y + grill.h/2 + 4);
+            }
+
+            const fryer = CLICK_ZONES.FRYER;
+            ctx.fillStyle = '#000000';
+            ctx.beginPath(); ctx.roundRect(fryer.x, fryer.y, fryer.w, fryer.h, 8); ctx.fill();
+            ctx.strokeStyle = '#eab308'; ctx.lineWidth = 2; ctx.stroke();
+
+            ctx.fillStyle = '#ffffff'; ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'center';
+            ctx.fillText("🍟 튀김기", fryer.x + fryer.w/2, fryer.y - 6);
+
+            if (fryerSlot.status === 'COOKING') {
+                ctx.fillStyle = '#f59e0b'; ctx.font = 'bold 10px sans-serif';
+                ctx.fillText("튀기는중...", fryer.x + fryer.w/2, fryer.y + fryer.h/2 - 10);
+                drawProgressBar(fryer.x + 8, fryer.y + fryer.h - 18, fryer.w - 16, 6, fryerSlot.progress / fryerSlot.cookTime, '#f39c12');
+            } else {
+                ctx.fillStyle = (fryerSlot.stock >= 4) ? '#ef4444' : '#9ca3af'; ctx.font = '10px sans-serif';
+                ctx.fillText((fryerSlot.stock >= 4) ? "재고 가득참" : "클릭: 튀기기", fryer.x + fryer.w/2, fryer.y + fryer.h/2 - 10);
+            }
+
+            // 감자튀김 재고 아이콘 & 카운트 표시
+            drawRealisticFries(fryer.x + fryer.w/2 - 15, fryer.y + fryer.h/2 + 10, 12);
+            ctx.fillStyle = '#fbbf24'; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'left';
+            ctx.fillText(`x ${fryerSlot.stock}/4`, fryer.x + fryer.w/2 + 2, fryer.y + fryer.h/2 + 14);
+
+            const disp = CLICK_ZONES.DISPENSER;
+            ctx.fillStyle = '#000000';
+            ctx.beginPath(); ctx.roundRect(disp.x, disp.y, disp.w, disp.h, 8); ctx.fill();
+            ctx.strokeStyle = '#3b82f6'; ctx.lineWidth = 2; ctx.stroke();
+
+            ctx.fillStyle = '#ffffff'; ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'center';
+            ctx.fillText("🥤 콜라기", disp.x + disp.w/2, disp.y - 6);
+
+            if (dispenserSlot.status === 'FILLING') {
+                ctx.fillStyle = '#3b82f6'; ctx.font = 'bold 10px sans-serif';
+                ctx.fillText("따르는중...", disp.x + disp.w/2, disp.y + disp.h/2 - 10);
+                drawProgressBar(disp.x + 8, disp.y + disp.h - 18, disp.w - 16, 6, dispenserSlot.progress / dispenserSlot.fillTime, '#3b82f6');
+            } else {
+                ctx.fillStyle = (dispenserSlot.stock >= 4) ? '#ef4444' : '#9ca3af'; ctx.font = '10px sans-serif';
+                ctx.fillText((dispenserSlot.stock >= 4) ? "재고 가득참" : "클릭: 따르기", disp.x + disp.w/2, disp.y + disp.h/2 - 10);
+            }
+
+            // 콜라 재고 아이콘 & 카운트 표시
+            drawRealisticCola(disp.x + disp.w/2 - 15, disp.y + disp.h/2 + 10, 12);
+            ctx.fillStyle = '#60a5fa'; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'left';
+            ctx.fillText(`x ${dispenserSlot.stock}/4`, disp.x + disp.w/2 + 2, disp.y + disp.h/2 + 14);
+
+            const asm = CLICK_ZONES.ASSEMBLY;
+            ctx.fillStyle = '#b07d4f';
+            ctx.beginPath(); ctx.roundRect(asm.x, asm.y + 15, asm.w, asm.h - 15, 8); ctx.fill();
+            ctx.strokeStyle = '#8c5a2b'; ctx.lineWidth = 2; ctx.stroke();
+
+            ctx.fillStyle = '#ffffff'; ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'center';
+            ctx.fillText("🍔 도마", asm.x + asm.w/2, asm.y + 10);
+
+            const trash = CLICK_ZONES.TRASH;
+            ctx.fillStyle = '#dc2626';
+            ctx.beginPath(); ctx.roundRect(trash.x, trash.y, trash.w, trash.h, 6); ctx.fill();
+            ctx.fillStyle = '#ffffff'; ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'center';
+            ctx.fillText("버", trash.x + trash.w/2, trash.y + 45);
+            ctx.fillText("리", trash.x + trash.w/2, trash.y + 65);
+            ctx.fillText("기", trash.x + trash.w/2, trash.y + 85);
+        }
+
+        function drawRealisticIngredientIcon(item, x, y) {
+            ctx.save();
+            ctx.translate(x, y);
+            switch(item) {
+                case 'BUN_BOTTOM': drawRealisticBunBottom(0, 0, 24); break;
+                case 'PATTY_RAW': drawRealisticPatty(0, 0, 'RAW', 24); break;
+                case 'CHEESE': drawRealisticCheese(0, 0, 24); break;
+                case 'LETTUCE': drawRealisticLettuce(0, 0, 24); break;
+                case 'PICKLE': drawRealisticPickle(0, 0, 20); break;
+                case 'BUN_TOP': drawRealisticBunTop(0, 0, 24); break;
+                case 'FRIES': drawRealisticFries(0, 0, 20); break;
+                case 'COLA': drawRealisticCola(0, 0, 20); break;
+            }
+            ctx.restore();
+        }
+
+        function drawRealisticBunTop(x, y, scale = 28) {
+            ctx.save(); ctx.translate(x, y);
+            const gradient = ctx.createRadialGradient(-scale*0.2, -scale*0.3, scale*0.1, 0, 0, scale);
+            gradient.addColorStop(0, '#f4a261'); gradient.addColorStop(1, '#b54826');
+            ctx.fillStyle = gradient;
+            ctx.beginPath(); ctx.arc(0, 0, scale, Math.PI, 0); ctx.fill();
+            ctx.restore();
+        }
+
+        function drawRealisticBunBottom(x, y, scale = 28) {
+            ctx.save(); ctx.translate(x, y);
+            ctx.fillStyle = '#e76f51';
+            ctx.beginPath(); ctx.roundRect(-scale, -4, scale * 2, 8, 3); ctx.fill();
+            ctx.restore();
+        }
+
+        function drawRealisticPatty(x, y, state, scale = 28) {
+            ctx.save(); ctx.translate(x, y);
+            let color = (state === 'COOKED') ? '#5c3d2e' : (state === 'BURNT' ? '#1e1e1e' : '#8d0801');
+            ctx.fillStyle = color;
+            ctx.beginPath(); ctx.ellipse(0, 0, scale, 7, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.restore();
+        }
+
+        function drawRealisticCheese(x, y, scale = 28) {
+            ctx.save(); ctx.translate(x, y);
+            ctx.fillStyle = '#ffb703';
+            ctx.beginPath(); ctx.moveTo(-scale, -2); ctx.lineTo(scale, -2); ctx.lineTo(scale - 4, 4); ctx.lineTo(-scale + 4, 2); ctx.closePath(); ctx.fill();
+            ctx.restore();
+        }
+
+        function drawRealisticLettuce(x, y, scale = 28) {
+            ctx.save(); ctx.translate(x, y);
+            ctx.fillStyle = '#52b788';
+            ctx.beginPath(); ctx.ellipse(0, 0, scale, 5, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.restore();
+        }
+
+        function drawRealisticPickle(x, y, scale = 20) {
+            ctx.save(); ctx.translate(x, y);
+            ctx.fillStyle = '#2d6a4f';
+            ctx.beginPath(); ctx.arc(-5, 0, 6, 0, Math.PI * 2); ctx.arc(5, 0, 6, 0, Math.PI * 2); ctx.fill();
+            ctx.restore();
+        }
+
+        function drawRealisticFries(x, y, scale = 20) {
+            ctx.save(); ctx.translate(x, y);
+            ctx.fillStyle = '#dc2626';
+            ctx.beginPath(); ctx.moveTo(-scale*0.6, scale); ctx.lineTo(scale*0.6, scale); ctx.lineTo(scale*0.8, -scale*0.2); ctx.lineTo(-scale*0.8, -scale*0.2); ctx.closePath(); ctx.fill();
+            ctx.fillStyle = '#fbbf24';
+            [-8, -3, 2, 7].forEach(ox => {
+                ctx.fillRect(ox, -scale*0.8, 3, scale*0.7);
+            });
+            ctx.restore();
+        }
+
+        function drawRealisticCola(x, y, scale = 20) {
+            ctx.save(); ctx.translate(x, y);
+            ctx.fillStyle = '#2563eb';
+            ctx.beginPath(); ctx.moveTo(-scale*0.5, scale); ctx.lineTo(scale*0.5, scale); ctx.lineTo(scale*0.7, -scale*0.6); ctx.lineTo(-scale*0.7, -scale*0.6); ctx.closePath(); ctx.fill();
+            ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 3;
+            ctx.beginPath(); ctx.moveTo(0, -scale*0.4); ctx.lineTo(6, -scale*1.1); ctx.stroke();
+            ctx.restore();
+        }
+
+        function drawCustomers() {
+            for (let i = 0; i < customers.length; i++) {
+                const c = customers[i];
+                const zone = CLICK_ZONES.CUSTOMERS[i];
+                const cx = zone.x + zone.w / 2;
+                const cy = zone.y + 180;
+
+                ctx.fillStyle = c.appearance.color;
+                ctx.beginPath(); ctx.roundRect(cx - 32, cy - 20, 64, 85, 12); ctx.fill();
+                ctx.fillStyle = c.appearance.skin;
+                ctx.beginPath(); ctx.arc(cx, cy - 38, 25, 0, Math.PI * 2); ctx.fill();
+
+                const patienceRatio = c.patience / c.maxPatience;
+                let gaugeColor = (patienceRatio < 0.3) ? '#ef4444' : ((patienceRatio < 0.6) ? '#f59e0b' : '#2ecc71');
+                drawProgressBar(cx - 45, zone.y - 10, 90, 7, patienceRatio, gaugeColor);
+
+                drawIntuitiveSpeechBubble(cx, zone.y + 2, c);
+            }
+        }
+
+        function drawIntuitiveSpeechBubble(x, y, customer) {
+            const bubbleWidth = 190;
+            const bubbleHeight = 120;
+            const bx = x - bubbleWidth / 2;
+            const by = y;
+
+            ctx.fillStyle = customer.isSpecial ? '#fffbebf0' : '#ffffff';
+            ctx.beginPath(); ctx.roundRect(bx, by, bubbleWidth, bubbleHeight, 10); ctx.fill();
+            ctx.strokeStyle = customer.isSpecial ? '#d97706' : '#1e293b'; 
+            ctx.lineWidth = customer.isSpecial ? 3 : 2.5; 
+            ctx.stroke();
+
+            ctx.fillStyle = customer.isSpecial ? '#b45309' : '#0f172a'; 
+            ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'center';
+            ctx.fillText(`${customer.orderTitle}`, x, by + 16);
+            ctx.fillStyle = '#2563eb'; ctx.font = 'bold 12px sans-serif';
+            ctx.fillText(`💰 ${customer.price.toLocaleString()}원`, x, by + 32);
+
+            ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.moveTo(bx + 8, by + 37); ctx.lineTo(bx + bubbleWidth - 8, by + 37); ctx.stroke();
+
+            const ingredients = customer.ingredients;
+            const startY = by + 48;
+            
+            // 괴식 주문으로 재료가 6개 이상일 경우 글자 간격을 좁혀서 표시
+            const lineGap = ingredients.length > 6 ? 11 : 14;
+
+            ingredients.forEach((ing, idx) => {
+                const itemY = startY + (idx * lineGap);
+                const stepNum = idx + 1;
+                const name = INGREDIENT_NAMES[ing];
+
+                ctx.textAlign = 'left'; 
+                ctx.font = ingredients.length > 6 ? 'bold 10px sans-serif' : 'bold 11px sans-serif';
+
+                if (ing === 'BUN_BOTTOM' || ing === 'BUN_TOP') ctx.fillStyle = '#d97706';
+                else if (ing === 'PATTY') ctx.fillStyle = '#78350f';
+                else if (ing === 'CHEESE') ctx.fillStyle = '#ca8a04';
+                else if (ing === 'LETTUCE') ctx.fillStyle = '#16a34a';
+                else if (ing === 'PICKLE') ctx.fillStyle = '#15803d';
+                else if (ing === 'FRIES') ctx.fillStyle = '#eab308';
+                else if (ing === 'COLA') ctx.fillStyle = '#2563eb';
+
+                ctx.fillText(` ${stepNum}. ${name}`, bx + 10, itemY);
+            });
+        }
+
+        function drawAssemblyArea() {
+            const asm = CLICK_ZONES.ASSEMBLY;
+            const startX = asm.x + asm.w / 2;
+            let startY = asm.y + asm.h / 2 + 15;
+
+            currentAssembly.forEach((item, index) => {
+                const layerY = startY - (index * 8);
+                
+                if (item === 'BUN_BOTTOM') drawRealisticBunBottom(startX, layerY, 24);
+                else if (item === 'PATTY') drawRealisticPatty(startX, layerY, 'COOKED', 24);
+                else if (item === 'PATTY_BURNT') drawRealisticPatty(startX, layerY, 'BURNT', 24);
+                else if (item === 'CHEESE') drawRealisticCheese(startX, layerY, 24);
+                else if (item === 'LETTUCE') drawRealisticLettuce(startX, layerY, 24);
+                else if (item === 'PICKLE') drawRealisticPickle(startX, layerY, 18);
+                else if (item === 'BUN_TOP') drawRealisticBunTop(startX, layerY, 24);
+                else if (item === 'FRIES') drawRealisticFries(startX + 22, layerY, 14);
+                else if (item === 'COLA') drawRealisticCola(startX - 22, layerY, 14);
+            });
+
+            ctx.fillStyle = '#ffffff'; ctx.font = 'bold 10px sans-serif'; ctx.textAlign = 'center';
+            if (currentAssembly.length === 0) {
+                ctx.fillStyle = '#94a3b8'; ctx.fillText("[도마 비었음]", startX, asm.y + asm.h + 14);
+            } else {
+                const assemblyText = currentAssembly.map(i => INGREDIENT_NAMES[i] || i).join('->');
+                ctx.fillStyle = '#fbbf24'; ctx.fillText(`${assemblyText}`, startX, asm.y + asm.h + 14);
+            }
+        }
+
+        function drawProgressBar(x, y, width, height, ratio, color) {
+            ratio = Math.max(0, Math.min(1, ratio));
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+            ctx.beginPath(); ctx.roundRect(x, y, width, height, height / 2); ctx.fill();
+            if (ratio > 0) {
+                ctx.fillStyle = color;
+                ctx.beginPath(); ctx.roundRect(x, y, width * ratio, height, height / 2); ctx.fill();
+            }
+        }
+
+        function drawHUD() {
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.95)';
+            ctx.fillRect(0, 0, canvas.width, 55);
+            ctx.strokeStyle = '#f59e0b'; ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.moveTo(0, 55); ctx.lineTo(canvas.width, 55); ctx.stroke();
+
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = Math.floor(timeLeft % 60);
+            const timeStr = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+
+            ctx.font = 'bold 16px sans-serif';
+            ctx.fillStyle = timeLeft < 30 ? '#ef4444' : '#ffffff'; ctx.textAlign = 'left';
+            ctx.fillText(`⏱️ 시간: ${timeStr} [${DIFFICULTY_SETTINGS[currentDifficulty].name.split(' ')[0]}]`, 15, 34);
+
+            ctx.textAlign = 'center'; ctx.fillStyle = '#fbbf24';
+            ctx.fillText(`💰 매출: ${sales.toLocaleString()}원 / ${targetSales.toLocaleString()}원`, canvas.width / 2 - 20, 34);
+
+            ctx.textAlign = 'right';
+            ctx.fillStyle = (satisfactionRate < targetSatisfaction) ? '#ef4444' : '#10b981';
+            ctx.fillText(`❤️ 만족도: ${satisfactionRate}% (목표:${targetSatisfaction}%)`, canvas.width - 120, 34);
+        }
+
+        function drawFloatingTexts() {
+            floatingTexts.forEach(ft => {
+                ctx.save();
+                ctx.globalAlpha = ft.alpha;
+                ctx.fillStyle = ft.color;
+                ctx.font = 'bold 17px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(ft.text, ft.x, ft.y);
+                ctx.restore();
+            });
+        }
+
+        function drawSoundToggleButton() {
+            const btn = SOUND_TOGGLE_BTN;
+            ctx.fillStyle = isMuted ? 'rgba(239, 68, 68, 0.8)' : 'rgba(16, 185, 129, 0.8)';
+            ctx.beginPath();
+            ctx.roundRect(btn.x, btn.y, btn.w, btn.h, 8);
+            ctx.fill();
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 12px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(isMuted ? '🔇 음소거' : '🔊 소리 ON', btn.x + btn.w / 2, btn.y + 22);
+        }
+
+        function drawStartScreen() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.85)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#1e293b'; ctx.beginPath(); ctx.roundRect(120, 25, 660, 550, 20); ctx.fill();
+            ctx.strokeStyle = '#f59e0b'; ctx.lineWidth = 4; ctx.stroke();
+
+            ctx.fillStyle = '#f59e0b'; ctx.font = 'bold 32px sans-serif'; ctx.textAlign = 'center';
+            ctx.fillText("3분 사장님 - 요리 장사 게임", canvas.width / 2, 68);
+
+            ctx.fillStyle = '#f8fafc'; ctx.font = '14px sans-serif';
+            ctx.fillText("🍔 난이도를 선택하여 3분 동안 최고의 매출을 올려보세요!", canvas.width / 2, 98);
+
+            ctx.fillStyle = '#0f172a';
+            ctx.beginPath(); ctx.roundRect(160, 115, 580, 50, 10); ctx.fill();
+            ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 1.5; ctx.stroke();
+
+            ctx.fillStyle = '#38bdf8'; ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'center';
+            ctx.fillText(`🏆 최고 기록 [ 쉬움: ${highScores.EASY.toLocaleString()}원 | 보통: ${highScores.NORMAL.toLocaleString()}원 | 어려움: ${highScores.HARD.toLocaleString()}원 ]`, canvas.width / 2, 145);
+
+            ctx.fillStyle = '#e2e8f0'; ctx.font = '13px sans-serif'; ctx.textAlign = 'left';
+            const startX = 160;
+            ctx.fillText("📖 [게임 조작 및 시스템 규정]", startX, 192);
+            ctx.fillText("• 일시정지: [ESC] 키로 게임을 일시정지 / 재개할 수 있습니다.", startX + 15, 213);
+            ctx.fillText("• 재료 선택: 숫자키 [1:아래빵] [2:패티구이/꺼내기] [3:치즈] [4:양상추] [5:피클] [6:위빵]", startX + 15, 233);
+            ctx.fillText("• 조리 기구: [Q: 패티그릴] [W: 감튀튀기기] [T: 감튀놓기] [E: 콜라따르기] [Y: 콜라놓기]", startX + 15, 253);
+            ctx.fillText("• 도마 비우기: [R: 버리기]", startX + 15, 273);
+            ctx.fillText("• 손님 서빙: [A: 1번손님] [S: 2번손님] [D: 3번손님] [F: 4번손님] (클릭 가능)", startX + 15, 293);
+            ctx.fillStyle = '#f43f5e';
+            ctx.fillText("⏰ 시간 특성: 1분이 지날 때마다 배경색이 바뀌고 손님의 인내심이 2초씩 줄어듭니다!", startX + 15, 315);
+
+            ctx.fillStyle = '#fbbf24'; ctx.font = 'bold 15px sans-serif'; ctx.textAlign = 'center';
+            ctx.fillText("🎮 난이도를 선택하면 바로 시작합니다!", canvas.width / 2, 345);
+
+            const easyBtn = CLICK_ZONES.DIFF_EASY_BTN;
+            easyBtn.y = 370;
+            ctx.fillStyle = '#10b981'; ctx.beginPath(); ctx.roundRect(easyBtn.x, easyBtn.y, easyBtn.w, easyBtn.h, 12); ctx.fill();
+            ctx.fillStyle = '#ffffff'; ctx.font = 'bold 18px sans-serif';
+            ctx.fillText("🌱 EASY", easyBtn.x + easyBtn.w / 2, easyBtn.y + 28);
+            ctx.font = '12px sans-serif'; ctx.fillStyle = '#e6fffa';
+            ctx.fillText("인내심 60초", easyBtn.x + easyBtn.w / 2, easyBtn.y + 48);
+
+            const normBtn = CLICK_ZONES.DIFF_NORMAL_BTN;
+            normBtn.y = 370;
+            ctx.fillStyle = '#f59e0b'; ctx.beginPath(); ctx.roundRect(normBtn.x, normBtn.y, normBtn.w, normBtn.h, 12); ctx.fill();
+            ctx.fillStyle = '#ffffff'; ctx.font = 'bold 18px sans-serif';
+            ctx.fillText("⚡ NORMAL", normBtn.x + normBtn.w / 2, normBtn.y + 28);
+            ctx.font = '12px sans-serif'; ctx.fillStyle = '#fef3c7';
+            ctx.fillText("인내심 35초", normBtn.x + normBtn.w / 2, normBtn.y + 48);
+
+            const hardBtn = CLICK_ZONES.DIFF_HARD_BTN;
+            hardBtn.y = 370;
+            ctx.fillStyle = '#ef4444'; ctx.beginPath(); ctx.roundRect(hardBtn.x, hardBtn.y, hardBtn.w, hardBtn.h, 12); ctx.fill();
+            ctx.fillStyle = '#ffffff'; ctx.font = 'bold 18px sans-serif';
+            ctx.fillText("🔥 HARD", hardBtn.x + hardBtn.w / 2, hardBtn.y + 28);
+            ctx.font = '12px sans-serif'; ctx.fillStyle = '#fee2e2';
+            ctx.fillText("인내심 28초", hardBtn.x + hardBtn.w / 2, hardBtn.y + 48);
+        }
+
+        function drawPauseScreen() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            const boxW = 460;
+            const boxH = 240;
+            const boxX = (canvas.width - boxW) / 2;
+            const boxY = (canvas.height - boxH) / 2;
+
+            ctx.fillStyle = '#1e293b';
+            ctx.beginPath();
+            ctx.roundRect(boxX, boxY, boxW, boxH, 16);
+            ctx.fill();
+            ctx.strokeStyle = '#f59e0b';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+
+            ctx.fillStyle = '#f59e0b';
+            ctx.font = 'bold 28px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText("⏸️ 일시 정지", canvas.width / 2, boxY + 55);
+
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '16px sans-serif';
+            ctx.fillText("게임이 일시정지 되었습니다.", canvas.width / 2, boxY + 95);
+
+            // 계속하기 버튼
+            const resBtn = CLICK_ZONES.PAUSE_RESUME_BTN;
+            ctx.fillStyle = '#10b981';
+            ctx.beginPath(); ctx.roundRect(resBtn.x, resBtn.y, resBtn.w, resBtn.h, 10); ctx.fill();
+            ctx.fillStyle = '#ffffff'; ctx.font = 'bold 16px sans-serif';
+            ctx.fillText("▶️ 계속하기", resBtn.x + resBtn.w / 2, resBtn.y + 32);
+
+            // 시작 화면으로 버튼
+            const homeBtn = CLICK_ZONES.PAUSE_HOME_BTN;
+            ctx.fillStyle = '#ef4444';
+            ctx.beginPath(); ctx.roundRect(homeBtn.x, homeBtn.y, homeBtn.w, homeBtn.h, 10); ctx.fill();
+            ctx.fillStyle = '#ffffff'; ctx.font = 'bold 16px sans-serif';
+            ctx.fillText("🏠 시작 화면", homeBtn.x + homeBtn.w / 2, homeBtn.y + 32);
+
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = '13px sans-serif';
+            ctx.fillText("키보드 [ESC] 키로도 계속할 수 있습니다.", canvas.width / 2, boxY + 205);
+        }
+
+        function drawGameOverScreen() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.85)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+            const isWin = gameState === 'GAMEOVER_WIN';
+
+            ctx.fillStyle = '#0f172a'; ctx.beginPath(); ctx.roundRect(200, 90, 500, 420, 20); ctx.fill();
+            ctx.strokeStyle = isWin ? '#10b981' : '#ef4444'; ctx.lineWidth = 5; ctx.stroke();
+
+            ctx.textAlign = 'center'; ctx.font = 'bold 36px sans-serif';
+            ctx.fillStyle = isWin ? '#10b981' : '#ef4444';
+            ctx.fillText(isWin ? "🎉 영업 성공! 🎉" : "😭 영업 실패...", canvas.width / 2, 155);
+
+            ctx.fillStyle = '#ffffff'; ctx.font = '16px sans-serif';
+            ctx.fillText(`난이도: [${DIFFICULTY_SETTINGS[currentDifficulty].name}]`, canvas.width / 2, 195);
+
+            ctx.font = '19px sans-serif'; ctx.textAlign = 'left';
+            ctx.fillText(`총 매출액: ${sales.toLocaleString()}원 / 목표:${targetSales.toLocaleString()}원`, 260, 250);
+            ctx.fillText(`최종 만족도: ${satisfactionRate}% / 목표:${targetSatisfaction}%`, 260, 290);
+            ctx.fillText(`응대한 손님: ${totalCustomersServed}명`, 260, 330);
+
+            const btn = CLICK_ZONES.RESTART_BTN;
+            ctx.fillStyle = isWin ? '#3b82f6' : '#f97316';
+            ctx.beginPath(); ctx.roundRect(btn.x, btn.y, btn.w, btn.h, 15); ctx.fill();
+            ctx.fillStyle = '#ffffff'; ctx.font = 'bold 22px sans-serif'; ctx.textAlign = 'center';
+            ctx.fillText("처음으로 돌아가기", btn.x + btn.w / 2, btn.y + 40);
+        }
+
+        canvas.addEventListener('click', handleInput);
+
+        function handleInput(e) {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+
+            const clickX = (e.clientX - rect.left) * scaleX;
+            const clickY = (e.clientY - rect.top) * scaleY;
+
+            // Sound Toggle Check
+            if (isInside(clickX, clickY, SOUND_TOGGLE_BTN)) {
+                isMuted = !isMuted;
+                if (isMuted) {
+                    playSound('stopBgm');
+                } else if (gameState === 'PLAYING') {
+                    playSound('bgm');
+                }
+                return;
+            }
+
+            if (gameState === 'PAUSED') {
+                if (isInside(clickX, clickY, CLICK_ZONES.PAUSE_RESUME_BTN)) {
+                    togglePause();
+                } else if (isInside(clickX, clickY, CLICK_ZONES.PAUSE_HOME_BTN)) {
+                    returnToStart();
+                }
+                return;
+            }
+
+            if (gameState === 'START') {
+                if (isInside(clickX, clickY, CLICK_ZONES.DIFF_EASY_BTN)) initGame('EASY');
+                else if (isInside(clickX, clickY, CLICK_ZONES.DIFF_NORMAL_BTN)) initGame('NORMAL');
+                else if (isInside(clickX, clickY, CLICK_ZONES.DIFF_HARD_BTN)) initGame('HARD');
+                return;
+            }
+
+            if (gameState === 'GAMEOVER_WIN' || gameState === 'GAMEOVER_LOSE') {
+                if (isInside(clickX, clickY, CLICK_ZONES.RESTART_BTN)) {
+                    gameState = 'START';
+                }
+                return;
+            }
+
+            if (gameState !== 'PLAYING') return;
+
+            const ingKeys = Object.keys(CLICK_ZONES.INGREDIENTS);
+            for (let key of ingKeys) {
+                const zone = CLICK_ZONES.INGREDIENTS[key];
+                if (isInside(clickX, clickY, zone)) {
+                    if (zone.item === 'PATTY_RAW') {
+                        if (grillSlot.status === 'EMPTY') {
+                            grillSlot.status = 'COOKING'; grillSlot.progress = 0;
+                            addFloatingText("패티 굽는중...", zone.x + zone.w/2, zone.y - 10, '#f39c12');
+                        } else addFloatingText("그릴이 차있습니다!", clickX, clickY - 20, '#ef4444');
+                    } else {
+                        currentAssembly.push(zone.item);
+                    }
+                    return;
+                }
+            }
+
+            if (isInside(clickX, clickY, CLICK_ZONES.GRILL)) {
+                if (grillSlot.status === 'READY') {
+                    currentAssembly.push('PATTY');
+                    grillSlot.status = 'EMPTY'; grillSlot.progress = 0;
+                    addFloatingText("+ 구운패티", clickX, clickY - 10, '#10b981');
+                } else if (grillSlot.status === 'BURNT') {
+                    grillSlot.status = 'EMPTY'; grillSlot.progress = 0;
+                    addFloatingText("탄 패티 버림!", clickX, clickY - 10, '#ef4444');
+                }
+                return;
+            }
+
+            if (isInside(clickX, clickY, CLICK_ZONES.FRYER)) {
+                if (fryerSlot.status === 'EMPTY') {
+                    if (fryerSlot.stock < 4) {
+                        fryerSlot.status = 'COOKING'; fryerSlot.progress = 0;
+                        addFloatingText("감자 튀기는중...", clickX, clickY - 10, '#f39c12');
+                    } else {
+                        addFloatingText("재고 가득참!", clickX, clickY - 10, '#ef4444');
+                    }
+                } else if (fryerSlot.status === 'COOKING') {
+                    addFloatingText("이미 튀기는 중입니다!", clickX, clickY - 10, '#f59e0b');
+                }
+                return;
+            }
+
+            if (isInside(clickX, clickY, CLICK_ZONES.DISPENSER)) {
+                if (dispenserSlot.status === 'EMPTY') {
+                    if (dispenserSlot.stock < 4) {
+                        dispenserSlot.status = 'FILLING'; dispenserSlot.progress = 0;
+                        addFloatingText("콜라 따르는중...", clickX, clickY - 10, '#3b82f6');
+                    } else {
+                        addFloatingText("재고 가득참!", clickX, clickY - 10, '#ef4444');
+                    }
+                } else if (dispenserSlot.status === 'FILLING') {
+                    addFloatingText("이미 따르는 중입니다!", clickX, clickY - 10, '#f59e0b');
+                }
+                return;
+            }
+
+            if (isInside(clickX, clickY, CLICK_ZONES.TRASH)) {
+                if (currentAssembly.length > 0) {
+                    currentAssembly = [];
+                    addFloatingText("도마 비움", clickX, clickY - 10, '#ef4444');
+                }
+                return;
+            }
+
+            for (let i = 0; i < customers.length; i++) {
+                const zone = CLICK_ZONES.CUSTOMERS[i];
+                if (isInside(clickX, clickY, zone)) {
+                    serveCustomer(i);
+                    return;
+                }
+            }
+        }
+
+        function isInside(x, y, zone) {
+            return x >= zone.x && x <= zone.x + zone.w && y >= zone.y && y <= zone.y + zone.h;
+        }
+
+        window.addEventListener('keydown', handleKeyDown);
+
+        function handleKeyDown(e) {
+            if (e.key === 'Escape' || e.key === 'Esc') {
+                if (gameState === 'PLAYING' || gameState === 'PAUSED') {
+                    togglePause();
+                    return;
+                }
+            }
+
+            if (gameState === 'START') {
+                const key = e.key.toUpperCase();
+                if (key === '1') initGame('EASY');
+                else if (key === '2') initGame('NORMAL');
+                else if (key === '3') initGame('HARD');
+                return;
+            }
+
+            if (gameState === 'GAMEOVER_WIN' || gameState === 'GAMEOVER_LOSE') {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    gameState = 'START';
+                }
+                return;
+            }
+
+            if (gameState !== 'PLAYING') return;
+
+            const key = e.key.toUpperCase();
+
+            if (key === '1') {
+                currentAssembly.push('BUN_BOTTOM');
+                addFloatingText("+ 아래빵", 60, 450, '#10b981');
+            } else if (key === '2') {
+                if (grillSlot.status === 'EMPTY') {
+                    grillSlot.status = 'COOKING'; grillSlot.progress = 0;
+                    addFloatingText("패티 굽는중...", CLICK_ZONES.GRILL.x + 45, CLICK_ZONES.GRILL.y - 10, '#f39c12');
+                } else if (grillSlot.status === 'READY') {
+                    currentAssembly.push('PATTY');
+                    grillSlot.status = 'EMPTY'; grillSlot.progress = 0;
+                    addFloatingText("+ 구운패티", CLICK_ZONES.GRILL.x + 45, CLICK_ZONES.GRILL.y - 10, '#10b981');
+                } else if (grillSlot.status === 'BURNT') {
+                    grillSlot.status = 'EMPTY'; grillSlot.progress = 0;
+                    addFloatingText("탄 패티 버림!", CLICK_ZONES.GRILL.x + 45, CLICK_ZONES.GRILL.y - 10, '#ef4444');
+                }
+            } else if (key === '3') {
+                currentAssembly.push('CHEESE');
+                addFloatingText("+ 치즈", 220, 450, '#10b981');
+            } else if (key === '4') {
+                currentAssembly.push('LETTUCE');
+                addFloatingText("+ 양상추", 300, 450, '#10b981');
+            } else if (key === '5') {
+                currentAssembly.push('PICKLE');
+                addFloatingText("+ 피클", 380, 450, '#10b981');
+            } else if (key === '6') {
+                currentAssembly.push('BUN_TOP');
+                addFloatingText("+ 위빵", 460, 450, '#10b981');
+            } else if (key === 'Q') {
+                if (grillSlot.status === 'EMPTY') {
+                    grillSlot.status = 'COOKING'; grillSlot.progress = 0;
+                    addFloatingText("패티 굽는중...", CLICK_ZONES.GRILL.x + 45, CLICK_ZONES.GRILL.y - 10, '#f39c12');
+                } else if (grillSlot.status === 'READY') {
+                    currentAssembly.push('PATTY');
+                    grillSlot.status = 'EMPTY'; grillSlot.progress = 0;
+                    addFloatingText("+ 구운패티", CLICK_ZONES.GRILL.x + 45, CLICK_ZONES.GRILL.y - 10, '#10b981');
+                } else if (grillSlot.status === 'BURNT') {
+                    grillSlot.status = 'EMPTY'; grillSlot.progress = 0;
+                    addFloatingText("탄 패티 버림!", CLICK_ZONES.GRILL.x + 45, CLICK_ZONES.GRILL.y - 10, '#ef4444');
+                }
+            } else if (key === 'W') {
+                // W키: 감자튀김 만들기
+                if (fryerSlot.status === 'EMPTY') {
+                    if (fryerSlot.stock < 4) {
+                        fryerSlot.status = 'COOKING'; fryerSlot.progress = 0;
+                        addFloatingText("감자 튀기는중...", CLICK_ZONES.FRYER.x + 40, CLICK_ZONES.FRYER.y - 10, '#f39c12');
+                    } else {
+                        addFloatingText("재고 가득참!", CLICK_ZONES.FRYER.x + 40, CLICK_ZONES.FRYER.y - 10, '#ef4444');
+                    }
+                } else if (fryerSlot.status === 'COOKING') {
+                    addFloatingText("이미 튀기는 중입니다!", CLICK_ZONES.FRYER.x + 40, CLICK_ZONES.FRYER.y - 10, '#f59e0b');
+                }
+            } else if (key === 'T') {
+                // T키: 만든 감자튀김 도마에 옮기기
+                if (fryerSlot.stock > 0) {
+                    fryerSlot.stock--;
+                    currentAssembly.push('FRIES');
+                    addFloatingText("+ 감자튀김 (남은재고 " + fryerSlot.stock + ")", CLICK_ZONES.FRYER.x + 40, CLICK_ZONES.FRYER.y - 10, '#10b981');
+                } else {
+                    addFloatingText("감자튀김 재고 없음!", CLICK_ZONES.FRYER.x + 40, CLICK_ZONES.FRYER.y - 10, '#ef4444');
+                }
+            } else if (key === 'E') {
+                // E키: 콜라 만들기
+                if (dispenserSlot.status === 'EMPTY') {
+                    if (dispenserSlot.stock < 4) {
+                        dispenserSlot.status = 'FILLING'; dispenserSlot.progress = 0;
+                        addFloatingText("콜라 따르는중...", CLICK_ZONES.DISPENSER.x + 40, CLICK_ZONES.DISPENSER.y - 10, '#3b82f6');
+                    } else {
+                        addFloatingText("재고 가득참!", CLICK_ZONES.DISPENSER.x + 40, CLICK_ZONES.DISPENSER.y - 10, '#ef4444');
+                    }
+                } else if (dispenserSlot.status === 'FILLING') {
+                    addFloatingText("이미 따르는 중입니다!", CLICK_ZONES.DISPENSER.x + 40, CLICK_ZONES.DISPENSER.y - 10, '#f59e0b');
+                }
+            } else if (key === 'Y') {
+                // Y키: 만든 콜라 도마에 옮기기
+                if (dispenserSlot.stock > 0) {
+                    dispenserSlot.stock--;
+                    currentAssembly.push('COLA');
+                    addFloatingText("+ 콜라 (남은재고 " + dispenserSlot.stock + ")", CLICK_ZONES.DISPENSER.x + 40, CLICK_ZONES.DISPENSER.y - 10, '#10b981');
+                } else {
+                    addFloatingText("콜라 재고 없음!", CLICK_ZONES.DISPENSER.x + 40, CLICK_ZONES.DISPENSER.y - 10, '#ef4444');
+                }
+            } else if (key === 'R') {
+                if (currentAssembly.length > 0) {
+                    currentAssembly = [];
+                    addFloatingText("도마 비움", CLICK_ZONES.ASSEMBLY.x + 40, CLICK_ZONES.ASSEMBLY.y - 10, '#ef4444');
+                }
+            } else if (key === 'A' && customers.length >= 1) serveCustomer(0);
+            else if (key === 'S' && customers.length >= 2) serveCustomer(1);
+            else if (key === 'D' && customers.length >= 3) serveCustomer(2);
+            else if (key === 'F' && customers.length >= 4) serveCustomer(3);
+        }
+
+        function serveCustomer(index) {
+            if (currentAssembly.length === 0) {
+                const custZone = CLICK_ZONES.CUSTOMERS[index];
+                addFloatingText("메뉴를 먼저 준비하세요!", custZone.x + 95, custZone.y + 140, '#f59e0b');
+                return;
+            }
+
+            const customer = customers[index];
+            const targetIngredients = customer.ingredients;
+
+            let isMatch = false;
+
+            // 서빙 판정 로직 개선: 버거 재료(빵,패티,치즈 등)의 제조 순서는 엄격히 지키되, 
+            // 감자튀김(FRIES)과 콜라(COLA)는 도마 위의 어느 순서/위치에 올려져 있든 만족하며 수령함
+            if (currentAssembly.length === targetIngredients.length) {
+                // 1. 버거 전용 순수 재료 배열 추출 (순서 유지)
+                const currentBurgerOnly = currentAssembly.filter(item => item !== 'FRIES' && item !== 'COLA');
+                const targetBurgerOnly = targetIngredients.filter(item => item !== 'FRIES' && item !== 'COLA');
+
+                // 2. 버거 구성요소 및 순서 일치 확인
+                const isBurgerMatch = (currentBurgerOnly.length === targetBurgerOnly.length) &&
+                    currentBurgerOnly.every((val, idx) => val === targetBurgerOnly[idx]);
+
+                // 3. 사이드 메뉴(감자튀김/콜라) 개수 일치 확인 (위치와 상관없음)
+                const countItem = (arr, item) => arr.filter(i => i === item).length;
+
+                const friesMatch = countItem(currentAssembly, 'FRIES') === countItem(targetIngredients, 'FRIES');
+                const colaMatch = countItem(currentAssembly, 'COLA') === countItem(targetIngredients, 'COLA');
+
+                if (isBurgerMatch && friesMatch && colaMatch) {
+                    isMatch = true;
+                }
+            }
+
+            const custZone = CLICK_ZONES.CUSTOMERS[index];
+
+            if (isMatch) {
+                playSound('pop');
+                sales += customer.price;
+                totalCustomersServed++;
+                satisfiedCustomers++;
+                recalculateSatisfaction();
+
+                addFloatingText(`+${customer.price.toLocaleString()}원!`, custZone.x + 95, custZone.y + 100, '#10b981');
+
+                customers.splice(index, 1);
+                currentAssembly = [];
+            } else {
+                addFloatingText("주문 구성 불일치!", custZone.x + 95, custZone.y + 100, '#ef4444');
+            }
+        }
+
+        function triggerKey(keyChar) {
+            handleKeyDown({ key: keyChar, preventDefault: () => {} });
+        }
+
+        requestAnimationFrame(gameLoop);
+    </script>
+</body>
+</html>
